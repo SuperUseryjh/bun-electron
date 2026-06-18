@@ -1,0 +1,17 @@
+{
+  "name": "bun-electron",
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build:host": "cd host && dotnet publish -c Release -o ../build/host --nologo",
+    "demo": "bun run demo/main.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
