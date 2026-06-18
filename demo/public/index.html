@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bun Electron Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+    }
+    .logo {
+      font-size: 3rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #f0c040, #f0a030);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      font-size: 1.1rem;
+      color: #8888aa;
+      margin-bottom: 2.5rem;
+    }
+    .card {
+      background: #16213e;
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid #2a2a4a;
+    }
+    .card h2 {
+      font-size: 1.1rem;
+      color: #f0c040;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .counter {
+      font-size: 4rem;
+      font-weight: 700;
+      color: #fff;
+      margin: 1rem 0;
+    }
+    .btn-group {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 0.65rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .btn-primary {
+      background: #f0c040;
+      color: #1a1a2e;
+    }
+    .btn-secondary {
+      background: #2a2a4a;
+      color: #e0e0e0;
+    }
+    .btn-danger {
+      background: #e74c3c;
+      color: #fff;
+    }
+    .status-bar {
+      background: #0f3460;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      color: #88aacc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .status-bar .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2ecc71;
+      margin-right: 6px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .badge {
+      display: inline-block;
+      background: #f0c040;
+      color: #1a1a2e;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    #autoResponse {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background: #1a1a3e;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      min-height: 2.5rem;
+      color: #88cc88;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">⚡ Bun Electron</div>
+    <div class="subtitle">Lightweight Desktop Apps · Bun + WebView2</div>
+
+    <!-- Counter Demo -->
+    <div class="card">
+      <h2>IPC Communication</h2>
+      <p style="color:#888; margin-bottom:0.5rem; font-size:0.9rem;">
+        Counter communicates with Bun main process via IPC
+      </p>
+      <div class="counter" id="counterValue">0</div>
+      <div class="btn-group">
+        <button class="btn-primary" onclick="increment()">+ Increment</button>
+        <button class="btn-danger" onclick="resetCounter()">Reset</button>
+      </div>
+      <div id="autoResponse"></div>
+    </div>
+
+    <!-- System Info -->
+    <div class="card">
+      <h2>System Info</h2>
+      <table style="width:100%; text-align:left; font-size:0.9rem;">
+        <tr><td style="padding:4px 8px; color:#888;">Runtime</td>
+            <td style="padding:4px 8px;">Bun <span id="bunVer"></span></td></tr>
+        <tr><td style="padding:4px 8px; color:#888;">WebView2</td>
+            <td style="padding:4px 8px;">Edge Chromium</td></tr>
+        <tr><td style="padding:4px 8px; color:#888;">Platform</td>
+            <td style="padding:4px 8px;">Windows (Native)</td></tr>
+        <tr><td style="padding:4px 8px; color:#888;">IPC</td>
+            <td style="padding:4px 8px;">WebSocket-like (stdin/stdout)</td></tr>
+      </table>
+    </div>
+
+    <!-- Status -->
+    <div class="status-bar">
+      <span><span class="dot"></span> Renderer Connected</span>
+      <span class="badge">v0.1.0</span>
+    </div>
+  </div>
+
+  <script>
+    // Bun Electron IPC bridge (injected by the host)
+    const ipc = window.bunElectron;
+
+    // === Counter Demo ===
+    let count = 0;
+    const counterEl = document.getElementById('counterValue');
+    const autoResponseEl = document.getElementById('autoResponse');
+
+    function increment() {
+      ipc.send('counter:increment', count);
+    }
+
+    function resetCounter() {
+      ipc.send('counter:reset');
+    }
+
+    // Listen for counter updates from main process
+    ipc.on('counter:updated', function(newCount) {
+      count = newCount;
+      counterEl.textContent = count;
+      autoResponseEl.textContent = '✓ Main process acknowledged: count = ' + count;
+      autoResponseEl.style.color = '#88cc88';
+    });
+
+    // Listen for welcome message
+    ipc.on('welcome', function(msg) {
+      console.log('Welcome:', msg);
+    });
+
+    // === Bootstrap ===
+    document.getElementById('bunVer').textContent = navigator.userAgent.match(/Bun\/([\d.]+)/)?.[1] || '1.x';
+    autoResponseEl.textContent = 'Ready — click "Increment" to test IPC';
+
+    console.log('Bun Electron demo initialized');
+    console.log('IPC bridge available:', !!ipc);
+  </script>
+</body>
+</html>
