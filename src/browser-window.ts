@@ -196,7 +196,7 @@ class StaticServer {
         },
       });
 
-      this.port = this.server.port;
+      this.port = this.server!.port!;
     }
 
     // Navigate to root for index.html, full path for other files

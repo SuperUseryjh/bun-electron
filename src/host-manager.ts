@@ -72,7 +72,7 @@ export class HostManager extends EventEmitter {
     });
 
     // Read stdout line by line
-    const reader = this.proc.stdout.getReader();
+    const reader = (this.proc.stdout as any).getReader() as ReadableStreamDefaultReader<Uint8Array>;
     this.readStdout(reader).catch((err) => {
       this.emit("error", err);
     });
@@ -131,7 +131,7 @@ export class HostManager extends EventEmitter {
   async sendCommand(cmd: Record<string, unknown>) {
     if (!this.proc?.stdin) throw new Error("Host not started");
     const json = JSON.stringify(cmd) + "\n";
-    this.proc.stdin.write(json);
+    (this.proc.stdin as any).write(json);
   }
 
   /**
@@ -242,7 +242,7 @@ export class HostManager extends EventEmitter {
       try {
         if (this.proc.stdin) {
           await this.sendCommand({ cmd: "quit" });
-          this.proc.stdin.end();
+          (this.proc.stdin as any).end();
         }
       } catch {}
       try {

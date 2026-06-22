@@ -1,0 +1,17 @@
+# Exclude WebView2 runtime cache and temp files
+build/host/WebViewHost.exe.WebView2/
+build/host/*.pdb
+build/host/*.xml
+
+# Exclude dev and test files
+demo/
+host/bin/
+host/obj/
+.nuget/
+node_modules/
+*.tgz
+
+# Exclude CI/config
+.github/
+tsconfig.json
+bun.lock

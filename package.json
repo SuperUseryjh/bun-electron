@@ -1,13 +1,55 @@
 {
   "name": "bun-electron",
   "version": "0.1.0",
-  "main": "src/index.ts",
+  "description": "A lightweight Electron alternative using Bun + WebView2",
   "type": "module",
-  "private": true,
-  "scripts": {
-    "build:host": "cd host && dotnet publish -c Release -o ../build/host --nologo",
-    "demo": "bun run demo/main.ts"
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
+  "files": [
+    "dist",
+    "src",
+    "build/host",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "bun run build:host && bun run build:js",
+    "build:host": "cd host && dotnet publish -c Release -o ../build/host --nologo",
+    "build:js": "bun build --outdir ./dist --target bun ./src/index.ts",
+    "demo": "bun run demo/main.ts",
+    "prepublishOnly": "bun run build",
+    "prepack": "bun run build"
+  },
+  "keywords": [
+    "bun",
+    "electron",
+    "webview2",
+    "desktop",
+    "windows",
+    "lightweight"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SuperUseryjh/bun-electron.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SuperUseryjh/bun-electron/issues"
+  },
+  "homepage": "https://github.com/SuperUseryjh/bun-electron#readme",
+  "engines": {
+    "bun": ">=1.0.0",
+    "node": ">=18.0.0"
+  },
+  "os": ["win32"],
+  "cpu": ["x64"],
   "devDependencies": {
     "@types/bun": "latest"
   },

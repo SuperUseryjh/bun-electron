@@ -1,0 +1,104 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      registry:
+        description: 'Publish registry'
+        required: true
+        default: 'npm'
+        type: choice
+        options:
+          - npm
+          - github-packages
+      version:
+        description: 'Version bump (npm only)'
+        required: false
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Install npm dependencies
+        run: bun install --frozen-lockfile
+
+      # ── Version bump ──────────────────────────────────────
+      - name: Bump version (release event)
+        if: github.event_name == 'release'
+        run: |
+          $tag = "${{ github.event.release.tag_name }}" -replace '^v', ''
+          if ($tag) {
+            npm version $tag --no-git-tag-version --allow-same-version
+          }
+
+      - name: Bump version (manual dispatch)
+        if: github.event_name == 'workflow_dispatch' && inputs.registry == 'npm'
+        run: npm version ${{ inputs.version }} --no-git-tag-version
+
+      # ── Build ─────────────────────────────────────────────
+      - name: Build the package
+        run: bun run build
+
+      # ── Package preview ───────────────────────────────────
+      - name: Create .tgz preview
+        run: npm pack --dry-run
+
+      # ── Publish to npm ────────────────────────────────────
+      - name: Publish to npm
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.registry == 'npm')
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # ── Publish to GitHub Packages ────────────────────────
+      - name: Configure GitHub Packages registry
+        if: github.event_name == 'workflow_dispatch' && inputs.registry == 'github-packages'
+        run: |
+          npm config set @${{ github.repository_owner }}:registry https://npm.pkg.github.com
+          npm config set -- '//npm.pkg.github.com/:_authToken' ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to GitHub Packages
+        if: github.event_name == 'workflow_dispatch' && inputs.registry == 'github-packages'
+        run: npm publish --registry https://npm.pkg.github.com
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Upload artifacts ──────────────────────────────────
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bun-electron-package
+          path: |
+            dist/
+            build/host/
+            package.json
+            README.md
+            LICENSE

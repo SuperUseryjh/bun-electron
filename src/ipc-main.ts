@@ -79,7 +79,7 @@ export class IpcMain extends EventEmitter {
   /**
    * Listen for IPC messages from renderer
    */
-  on(channel: string, handler: IpcHandler): this {
+  override on(channel: string, handler: IpcHandler): this {
     if (!this.handlers.has(channel)) {
       this.handlers.set(channel, []);
     }
@@ -90,7 +90,7 @@ export class IpcMain extends EventEmitter {
   /**
    * Remove a listener
    */
-  removeAllListeners(channel?: string): this {
+  override removeAllListeners(channel?: string): this {
     if (channel) {
       this.handlers.delete(channel);
     } else {
